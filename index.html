@@ -1,0 +1,991 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ПВЗ Смены">
+<meta name="theme-color" content="#FFFFFF">
+<title>ПВЗ Смены</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Макет: Telegram Mini App на iPhone — шапка, переключатель ролей, экран, нижнее меню.
+   Сознательно одна светлая тема: белый фон, синий акцент Telegram. */
+:root{
+  --bg:#FFFFFF;
+  --bg2:#F2F3F7;
+  --text:#0F1419;
+  --hint:#8A919B;
+  --line:#E4E6EB;
+  --accent:#2AABEE;
+  --accent-dk:#1A93D2;
+  --accent-soft:#E6F5FD;
+  --yel:#F0AE00;
+  --yel-soft:#FFF4CC;
+  --yel-text:#7F5D00;
+  --grn:#2FA84F;
+  --grn-soft:#E2F5E7;
+  --grn-text:#1B7535;
+  --red:#E5484D;
+  --red-soft:#FDEBEC;
+  --red-text:#B4232A;
+  --vac:#9AA1AB;
+  --vac-soft:#ECEEF2;
+  --on-accent:#FFFFFF;
+  --shade:rgba(15,20,25,.38);
+  --chat-a:#D5E4C3;
+  --chat-b:#BFD9CF;
+  --font:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme:light;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text)}
+body{font-family:var(--font);font-size:16px;line-height:1.35;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+button:focus-visible,[data-a]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3,p{margin:0}
+.num{font-variant-numeric:tabular-nums}
+
+.app{max-width:440px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+
+/* Шапка Mini App */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);
+  padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));padding-block:6px 10px;
+  border-bottom:1px solid transparent}
+.top.scrolled{border-bottom-color:var(--line)}
+.tg-bar{display:grid;grid-template-columns:84px 1fr 84px;align-items:center;height:44px}
+.tg-close{color:var(--accent);font-size:17px;text-align:left;padding:8px 4px}
+.tg-title{text-align:center;line-height:1.15}
+.tg-title b{display:block;font-size:17px;font-weight:600}
+.tg-title span{font-size:12px;color:var(--hint)}
+.tg-more{justify-self:end;width:32px;height:32px;border-radius:50%;background:var(--bg2);display:grid;place-items:center;color:var(--text)}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--bg2);border-radius:11px;padding:3px;margin-top:4px;position:relative}
+.seg button{position:relative;z-index:1;height:34px;border-radius:9px;font-size:15px;font-weight:500;color:var(--hint);transition:color .2s}
+.seg button.on{color:var(--text)}
+.seg .thumb{position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);background:var(--bg);border-radius:9px;box-shadow:0 1px 3px rgba(15,20,25,.12);transition:transform .25s ease}
+.seg.owner .thumb{transform:translateX(100%)}
+
+/* Экран */
+main{flex:1;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:6px calc(96px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:16px}
+.screen-head{display:flex;flex-direction:column;gap:2px;padding-top:6px}
+.screen-head h1{font-size:28px;font-weight:700;letter-spacing:-.4px;text-wrap:balance}
+.screen-head p{color:var(--hint);font-size:15px}
+.section-title{font-size:13px;font-weight:600;color:var(--hint);text-transform:uppercase;letter-spacing:.5px;padding:0 4px;margin-bottom:-8px}
+.card{background:var(--bg2);border-radius:16px;padding:14px 16px}
+.list{background:var(--bg2);border-radius:16px;overflow:hidden}
+.list-row{display:flex;align-items:center;gap:12px;padding:12px 16px;position:relative;width:100%;text-align:left}
+.list-row + .list-row::before,.list-row + .emp-detail::before,.emp-detail + .list-row::before{content:"";position:absolute;top:0;left:16px;right:0;height:1px;background:var(--line)}
+.list-row .grow{flex:1;min-width:0}
+.list-row .t{font-size:16px;font-weight:500}
+.list-row .s{font-size:13px;color:var(--hint);margin-top:1px}
+.list-row .r{text-align:right;font-weight:600;white-space:nowrap}
+.hint{color:var(--hint);font-size:13px;padding:0 4px}
+
+.who{display:flex;align-items:center;gap:12px;padding:2px 2px 0}
+.who b{display:block;font-size:16px}
+.who span{font-size:13px;color:var(--hint)}
+.ava{width:40px;height:40px;border-radius:50%;flex:none;display:grid;place-items:center;color:#fff;font-weight:600;font-size:15px}
+.ava.sm{width:32px;height:32px;font-size:13px}
+
+.pill{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 8px;border-radius:11px;font-size:12px;font-weight:600;white-space:nowrap}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.review{background:var(--yel-soft);color:var(--yel-text)}
+.pill.confirmed{background:var(--grn-soft);color:var(--grn-text)}
+.pill.paid{background:var(--accent-soft);color:var(--accent-dk)}
+.pill.vacation{background:var(--vac-soft);color:#5E6570}
+.pill.plan{background:var(--bg);color:var(--hint);box-shadow:inset 0 0 0 1px var(--line)}
+.pill.red{background:var(--red-soft);color:var(--red-text)}
+
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:50px;border-radius:12px;background:var(--accent);color:var(--on-accent);font-size:17px;font-weight:600;transition:background .15s,transform .1s}
+.btn:active{background:var(--accent-dk);transform:scale(.99)}
+.btn.soft{background:var(--accent-soft);color:var(--accent-dk)}
+.btn.ghost{background:var(--bg2);color:var(--text)}
+.btn.danger{background:var(--red-soft);color:var(--red-text)}
+.btn.small{height:36px;width:auto;padding:0 14px;font-size:15px;border-radius:10px}
+.btn.yel{background:var(--yel);color:#fff}
+.btn[disabled]{opacity:.4;pointer-events:none}
+
+/* Календарь */
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal-head b{font-size:17px}
+.icon-btn{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:var(--accent)}
+.icon-btn:active{background:var(--accent-soft)}
+.cal-wd,.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-wd span{text-align:center;font-size:12px;color:var(--hint);font-weight:500;padding-bottom:4px}
+.day{min-height:54px;border-radius:12px;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:7px;gap:3px;position:relative}
+.day .n{font-size:16px;font-weight:500;line-height:1}
+.day .lb{font-size:9.5px;font-weight:600;letter-spacing:-.1px;line-height:1.1;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px}
+.day.out{background:transparent;opacity:.35;pointer-events:none}
+.day.today{box-shadow:inset 0 0 0 2px var(--accent)}
+.day.today .n{color:var(--accent-dk);font-weight:700}
+.day.review{background:var(--yel-soft)}.day.review .lb{color:var(--yel-text)}
+.day.confirmed{background:var(--grn-soft)}.day.confirmed .lb{color:var(--grn-text)}
+.day.paid{background:var(--accent-soft)}.day.paid .lb{color:var(--accent-dk)}
+.day.vacation{background:var(--vac-soft)}.day.vacation .lb{color:#5E6570}
+.day.unpaid{background:var(--red-soft)}.day.unpaid .lb{color:var(--red-text)}
+.day.plan{background:var(--bg);box-shadow:inset 0 0 0 1.5px var(--line)}.day.plan .lb{color:var(--hint)}
+.day.today.plan,.day.today.review,.day.today.confirmed{box-shadow:inset 0 0 0 2px var(--accent)}
+.day:active{transform:scale(.95)}
+.legend{display:flex;flex-wrap:wrap;gap:6px;padding:0 2px}
+
+/* Деньги */
+.hero{background:var(--accent);color:var(--on-accent);border-radius:20px;padding:18px 18px 16px;display:flex;flex-direction:column;gap:4px}
+.hero .lbl{font-size:15px;opacity:.9}
+.hero .big{font-size:44px;font-weight:700;letter-spacing:-1px;line-height:1.05}
+.hero .sub{font-size:14px;opacity:.9}
+.hero.done{background:var(--grn)}
+.big-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.money-card{display:flex;flex-direction:column;gap:2px}
+.money-card .lbl{font-size:15px;color:var(--hint)}
+.money-card .val{font-size:30px;font-weight:700;letter-spacing:-.5px}
+.money-card .sub{font-size:14px;color:var(--hint)}
+.debt{background:var(--red-soft)}
+.debt .lbl{color:var(--red-text)}
+.debt .val{color:var(--red-text)}
+.debt.added{background:var(--grn-soft)}
+.debt.added .lbl,.debt.added .val{color:var(--grn-text)}
+.bump{animation:bump .5s ease}
+@keyframes bump{0%{transform:scale(1)}35%{transform:scale(1.06)}100%{transform:scale(1)}}
+
+/* Выплата */
+.banner{display:flex;align-items:center;gap:12px;background:var(--yel-soft);border-radius:16px;padding:12px 14px}
+.banner .grow{flex:1;min-width:0}
+.banner b{display:block;font-size:15px;color:var(--yel-text)}
+.banner span{font-size:13px;color:var(--yel-text);opacity:.85}
+.banner.ok{background:var(--grn-soft)}
+.banner.ok b,.banner.ok span{color:var(--grn-text)}
+.emp-row.pending{background:var(--yel-soft)}
+.emp-row .chev{color:var(--hint);transition:transform .2s;flex:none}
+.emp-row.open .chev{transform:rotate(90deg)}
+.emp-detail{position:relative;padding:4px 16px 12px 16px;display:flex;flex-direction:column;gap:2px;font-size:14px}
+.emp-detail.pending{background:var(--yel-soft)}
+.line{display:flex;align-items:center;gap:8px;min-height:30px}
+.line .grow{flex:1;min-width:0;color:var(--text)}
+.line .grow small{color:var(--hint);font-size:13px}
+.line .am{font-weight:600;white-space:nowrap}
+.line.warn{background:var(--bg);border-radius:10px;padding:6px 6px 6px 10px;margin:3px 0;box-shadow:inset 0 0 0 1.5px var(--yel)}
+.line .minus{color:var(--red-text)}
+.line .plus{color:var(--grn-text)}
+.ok-btn{height:30px;padding:0 12px;border-radius:8px;background:var(--grn);color:#fff;font-size:14px;font-weight:600;flex:none}
+
+/* Сегодня */
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--bg2);border-radius:16px;padding:12px 14px}
+.stat b{display:block;font-size:24px;font-weight:700}
+.stat span{font-size:13px;color:var(--hint)}
+.point{background:var(--bg2);border-radius:18px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.point-top{display:flex;align-items:flex-start;gap:10px}
+.point-top .grow{flex:1;min-width:0}
+.point-top b{font-size:18px;display:block}
+.point-top span{font-size:13px;color:var(--hint)}
+.dot{width:10px;height:10px;border-radius:50%;margin-top:7px;flex:none;background:var(--grn)}
+.point.alarm{background:var(--red-soft);box-shadow:inset 0 0 0 1.5px var(--red)}
+.point.alarm .dot{background:var(--red)}
+.point.wait .dot{background:var(--yel)}
+.alarm-text{color:var(--red-text);font-weight:600;font-size:15px}
+.alarm-text small{display:block;font-weight:400;font-size:13px;opacity:.85}
+.staff-line{display:flex;align-items:center;gap:10px;background:var(--bg);border-radius:12px;padding:8px 10px}
+.staff-line .grow{flex:1;min-width:0}
+.staff-line b{font-size:15px;font-weight:600;display:block}
+.staff-line span{font-size:13px;color:var(--hint)}
+
+/* График */
+.week-nav{display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border-radius:14px;padding:4px}
+.week-nav b{font-size:16px}
+.sched{display:grid;grid-template-columns:52px repeat(3,minmax(0,1fr));gap:4px}
+.sched .h{font-size:12px;font-weight:600;color:var(--hint);text-align:center;padding:4px 0;line-height:1.2}
+.sched .d{display:flex;flex-direction:column;justify-content:center;padding-left:4px;border-radius:10px;line-height:1.15}
+.sched .d b{font-size:15px}
+.sched .d span{font-size:12px;color:var(--hint)}
+.sched .d.today b,.sched .d.today span{color:var(--accent-dk)}
+.cell{min-height:48px;border-radius:10px;background:var(--bg2);display:flex;align-items:center;justify-content:center;gap:5px;font-size:13.5px;font-weight:500;padding:4px;text-align:center;line-height:1.15}
+.cell .sd{width:6px;height:6px;border-radius:50%;flex:none}
+.cell.st-review .sd{background:var(--yel)}
+.cell.st-confirmed .sd{background:var(--grn)}
+.cell.st-paid .sd{background:var(--accent)}
+.cell.st-plan .sd{background:var(--line)}
+.cell.empty{background:var(--red-soft);color:var(--red-text);font-weight:600;box-shadow:inset 0 0 0 1.5px var(--red)}
+.cell.today{box-shadow:inset 0 0 0 2px var(--accent)}
+.cell.empty.today{box-shadow:inset 0 0 0 2px var(--red)}
+.cell:active{transform:scale(.96)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{height:32px;padding:0 12px;border-radius:16px;background:var(--bg2);font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:6px}
+.chip.on{background:var(--accent);color:var(--on-accent)}
+.chip .c{font-weight:600;color:var(--hint)}
+.chip.on .c{color:var(--on-accent);opacity:.85}
+.chips.scroll{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px}
+.chips.scroll::-webkit-scrollbar{display:none}
+
+/* Пометки */
+.note{background:var(--bg2);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;text-align:left;width:100%}
+.note-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.note-top .meta{font-size:13px;color:var(--hint);margin-left:auto}
+.note p{font-size:15px}
+.note .foot{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--hint)}
+.note .foot .act{margin-left:auto;color:var(--accent-dk);font-weight:600}
+.note.solved{opacity:.6}
+.tag{display:inline-flex;align-items:center;height:24px;padding:0 9px;border-radius:8px;font-size:12.5px;font-weight:600}
+.tag.short{background:var(--red-soft);color:var(--red-text)}
+.tag.accept{background:var(--yel-soft);color:var(--yel-text)}
+.tag.remark{background:var(--accent-soft);color:var(--accent-dk)}
+.tag.pt{background:var(--bg);color:var(--text)}
+.solved-mark{color:var(--grn-text);font-weight:600}
+
+/* Бот */
+.chat{border-radius:20px;overflow:hidden;display:flex;flex-direction:column;box-shadow:inset 0 0 0 1px var(--line);margin:0 -4px}
+.chat-head{display:flex;align-items:center;gap:10px;background:var(--bg);padding:10px 12px;border-bottom:1px solid var(--line)}
+.chat-head .back{color:var(--accent);display:flex;align-items:center;font-size:16px}
+.chat-head .grow{flex:1;text-align:center;line-height:1.2}
+.chat-head .grow b{display:block;font-size:16px}
+.chat-head .grow span{font-size:12.5px;color:var(--hint)}
+.bot-ava{width:36px;height:36px;border-radius:50%;background:var(--accent);display:grid;place-items:center;color:#fff;flex:none}
+.chat-body{background:linear-gradient(165deg,var(--chat-a),var(--chat-b));padding:14px 10px 16px;display:flex;flex-direction:column;gap:10px;min-height:440px;position:relative}
+.chat-body::before{content:"";position:absolute;inset:0;opacity:.18;background-image:radial-gradient(circle at 10px 10px,#fff 1.6px,transparent 2px),radial-gradient(circle at 30px 28px,#fff 1.2px,transparent 1.6px);background-size:40px 40px;pointer-events:none}
+.day-sep{align-self:center;background:rgba(40,60,40,.28);color:#fff;font-size:13px;font-weight:600;padding:3px 10px;border-radius:12px;position:relative}
+.msg{align-self:flex-start;max-width:88%;position:relative;display:flex;flex-direction:column;gap:4px}
+.bubble{background:#fff;border-radius:16px 16px 16px 6px;padding:8px 12px 6px;font-size:16px;line-height:1.35;box-shadow:0 1px 1px rgba(0,0,0,.08)}
+.bubble .from{color:var(--accent-dk);font-weight:600;font-size:14px;margin-bottom:2px}
+.bubble .time{float:right;font-size:12px;color:var(--hint);margin:6px 0 0 10px}
+.bubble.main{box-shadow:0 0 0 2px var(--accent),0 2px 10px rgba(42,171,238,.25)}
+.kb{display:grid;gap:4px}
+.kb.two{grid-template-columns:1fr 1fr}
+.kb button{background:rgba(40,70,50,.32);color:#fff;font-size:14.5px;font-weight:600;height:38px;border-radius:10px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.kb button:active{background:rgba(40,70,50,.5)}
+.chat-input{display:flex;align-items:center;gap:8px;background:var(--bg);padding:8px 10px;border-top:1px solid var(--line)}
+.chat-input .menu-btn{background:var(--accent);color:#fff;font-size:14px;font-weight:600;height:32px;padding:0 12px;border-radius:16px;flex:none}
+.chat-input .field{flex:1;height:34px;border-radius:17px;box-shadow:inset 0 0 0 1px var(--line);color:var(--hint);display:flex;align-items:center;padding:0 14px;font-size:15px}
+
+/* Нижнее меню */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:rgba(255,255,255,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+.tabbar-in{max-width:440px;margin:0 auto;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;padding:6px 4px 4px}
+.tab{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--hint);font-size:11px;font-weight:500;height:50px;justify-content:center;position:relative}
+.tab svg{width:26px;height:26px}
+.tab.on{color:var(--accent)}
+.tab .badge{position:absolute;top:2px;left:calc(50% + 6px);min-width:18px;height:18px;border-radius:9px;background:var(--red);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;padding:0 5px;border:2px solid var(--bg)}
+
+/* Шторка */
+.shade{position:fixed;inset:0;background:var(--shade);z-index:40;opacity:0;pointer-events:none;transition:opacity .25s}
+.shade.open{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;max-width:440px;margin:0 auto;background:var(--bg);border-radius:20px 20px 0 0;
+  padding:8px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  transform:translateY(105%);visibility:hidden;transition:transform .3s cubic-bezier(.2,.8,.2,1),visibility 0s .3s;max-height:88vh;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+.sheet.open{transform:translateY(0);visibility:visible;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.grab{width:36px;height:5px;border-radius:3px;background:var(--line);align-self:center;margin-bottom:2px}
+.sheet h2{font-size:21px;font-weight:700}
+.sheet .sub{color:var(--hint);font-size:14px;margin-top:2px}
+.step{font-size:14px;font-weight:600;color:var(--hint);margin-bottom:-6px}
+.step.err{color:var(--red-text)}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;align-items:center;gap:12px;background:var(--bg2);border-radius:14px;padding:12px 14px;text-align:left;width:100%;box-shadow:inset 0 0 0 2px transparent;transition:box-shadow .15s,background .15s}
+.opt .grow{flex:1;min-width:0}
+.opt b{display:block;font-size:16px;font-weight:600}
+.opt span{font-size:13px;color:var(--hint)}
+.opt.on{background:var(--accent-soft);box-shadow:inset 0 0 0 2px var(--accent)}
+.opt .radio{width:22px;height:22px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--line);flex:none;display:grid;place-items:center}
+.opt.on .radio{box-shadow:inset 0 0 0 7px var(--accent)}
+.opt[disabled]{opacity:.45;pointer-events:none}
+.opt.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.acts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.act-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;height:84px;border-radius:14px;background:var(--accent);color:#fff;font-weight:600;font-size:15px;text-align:center;line-height:1.15}
+.act-btn small{font-weight:500;font-size:12px;opacity:.9}
+.act-btn.alt{background:var(--accent-soft);color:var(--accent-dk)}
+.act-btn.vac{background:var(--vac-soft);color:#4A515B}
+.act-btn.on{box-shadow:inset 0 0 0 2px var(--accent-dk)}
+.act-btn.off{opacity:.4}
+.stepper{display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border-radius:14px;padding:8px}
+.stepper button{width:44px;height:44px;border-radius:12px;background:var(--bg);font-size:24px;font-weight:500;color:var(--accent-dk)}
+.stepper .v{text-align:center}
+.stepper .v b{font-size:24px;display:block}
+.stepper .v span{font-size:13px;color:var(--hint)}
+.kv{display:flex;flex-direction:column;background:var(--bg2);border-radius:14px}
+.kv div{display:flex;justify-content:space-between;gap:12px;padding:11px 14px;position:relative}
+.kv div + div::before{content:"";position:absolute;top:0;left:14px;right:0;height:1px;background:var(--line)}
+.kv span{color:var(--hint)}
+.kv b{font-weight:600;text-align:right}
+textarea{width:100%;min-height:90px;border:0;border-radius:14px;background:var(--bg2);padding:12px 14px;font:inherit;font-size:16px;color:var(--text);resize:none}
+textarea:focus{outline:2px solid var(--accent)}
+.row-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+/* Тост */
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);z-index:60;background:rgba(30,35,40,.92);color:#fff;
+  padding:10px 16px;border-radius:14px;font-size:15px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:calc(100% - 32px);display:flex;gap:8px;align-items:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast svg{color:#6FD08C;flex:none}
+
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top" id="top">
+    <div class="tg-bar">
+      <button class="tg-close" data-a="close">Закрыть</button>
+      <div class="tg-title"><b>ПВЗ Смены</b><span>мини-приложение</span></div>
+      <button class="tg-more" data-a="menu" aria-label="Меню">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+      </button>
+    </div>
+    <div class="seg" id="seg">
+      <div class="thumb"></div>
+      <button data-a="role" data-v="emp" id="seg-emp">Сотрудник</button>
+      <button data-a="role" data-v="owner" id="seg-owner">Владелец</button>
+    </div>
+  </div>
+  <main id="main"></main>
+</div>
+<nav class="tabbar"><div class="tabbar-in" id="tabs"></div></nav>
+<div class="shade" id="shade" data-a="closeSheet"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== Константы и выдуманные данные ===== */
+const RATE = 2500, HOUR_RATE = 250, SHIFT_HOURS = 10;
+const TODAY = '2026-10-28';         // демо-«сегодня»: среда
+const CUR_WEEK = '2026-10-26';      // текущая неделя пн–вс
+const PAY_WEEK = '2026-10-19';      // неделя, которую платим в четверг
+const PAY_DATE = '2026-10-29';      // четверг
+const ME = 'anna';
+
+const POINTS = [
+  {id:'len', name:'Ленина 5',    short:'Ленина',  addr:'ул. Ленина, 5'},
+  {id:'nev', name:'Невский 120', short:'Невский', addr:'Невский пр., 120'},
+  {id:'kup', name:'Купчино',     short:'Купчино', addr:'ул. Ярослава Гашека, 6'},
+];
+const HOURS_OPEN = '10:00–20:00';
+const STAFF = [
+  {id:'anna',   name:'Анна Смирнова',   color:'#F08A4B'},
+  {id:'dmitry', name:'Дмитрий Козлов',  color:'#4FA3E3'},
+  {id:'olga',   name:'Ольга Иванова',   color:'#A67BD6'},
+  {id:'sergey', name:'Сергей Петров',   color:'#3FB29E'},
+  {id:'maria',  name:'Мария Кузнецова', color:'#E5678C'},
+  {id:'igor',   name:'Игорь Волков',    color:'#6584E0'},
+  {id:'elena',  name:'Елена Новикова',  color:'#D99A2B'},
+  {id:'alexey', name:'Алексей Морозов', color:'#56B35C'},
+];
+
+function buildState(){
+  // Смены Анны (это «я» в роли сотрудника)
+  const ANNA = {
+    '2026-09-23':'len','2026-09-25':'len','2026-09-27':'kup',
+    '2026-09-29':'len','2026-10-01':'len','2026-10-03':'nev',
+    '2026-10-06':'len','2026-10-08':'len','2026-10-10':'nev',
+    '2026-10-13':'len','2026-10-15':'len','2026-10-17':'len','2026-10-18':'nev',
+    '2026-10-20':'len','2026-10-22':'len','2026-10-24':'nev','2026-10-25':'len',
+    '2026-10-26':'len','2026-10-27':'len','2026-10-28':'len',
+    '2026-10-30':'vac','2026-10-31':'vac',
+    '2026-11-01':'len','2026-11-03':'len','2026-11-05':'len','2026-11-07':'nev',
+  };
+  const FIXED = {'2026-10-23|nev':'dmitry','2026-10-21|nev':'olga','2026-10-26|kup':'sergey'};
+  const EMPTY = {'2026-10-28|kup':1,'2026-11-04|nev':1};
+  const SPECIAL = {
+    '2026-09-27|kup':{status:'confirmed', unpaid:true},
+    '2026-10-17|len':{type:'hours', hours:6},
+    '2026-10-21|kup':{type:'hours', hours:8},
+    '2026-10-24|kup':{type:'hours', hours:6, status:'review'},
+    '2026-10-25|nev':{status:'review'},
+  };
+  const others = STAFF.filter(s=>s.id!==ME).map(s=>s.id);
+  const shifts = []; let sid = 1, i = 0;
+  for (let ds='2026-09-21'; ds<='2026-11-08'; ds=add(ds,1), i++){
+    const used = new Set(), assign = {};
+    const ap = ANNA[ds];
+    if (ap && ap!=='vac'){ assign[ap]=ME; used.add(ME); }
+    POINTS.forEach(p=>{ const f=FIXED[ds+'|'+p.id]; if (f && !assign[p.id]){ assign[p.id]=f; used.add(f); } });
+    POINTS.forEach((p,pi)=>{
+      if (assign[p.id] || EMPTY[ds+'|'+p.id]) return;
+      let k=(i*3+pi)%others.length; while (used.has(others[k])) k=(k+1)%others.length;
+      assign[p.id]=others[k]; used.add(others[k]);
+    });
+    POINTS.forEach(p=>{
+      const emp = assign[p.id]; if (!emp) return;
+      const sp = SPECIAL[ds+'|'+p.id] || {};
+      shifts.push({id:sid++, emp, point:p.id, date:ds, type:sp.type||'full', hours:sp.hours||SHIFT_HOURS,
+        status: sp.status || seedStatus(ds, emp), unpaid: !!sp.unpaid});
+    });
+    if (ap==='vac') shifts.push({id:sid++, emp:ME, point:null, date:ds, type:'vacation', hours:0, status:'confirmed'});
+  }
+  const debts = shifts.filter(s=>s.unpaid).map(s=>({id:'d'+s.id, emp:s.emp, shiftId:s.id, amount:RATE, added:false, paid:false}));
+  return {
+    role:'emp', tab:'shifts', calMonth:'2026-10', schedWeek:CUR_WEEK, noteFilter:'all',
+    shifts, debts, sid,
+    adjustments:[
+      {emp:'dmitry', week:PAY_WEEK, amount:-1000, label:'Штраф: недостача в кассе 23 окт'},
+      {emp:'olga',   week:PAY_WEEK, amount:500,   label:'Доплата: приёмка поставки после закрытия'},
+    ],
+    expanded:new Set(),
+    payoutDone:false, payouts:[],
+    checkins:{len:'9:52', nev:'9:58'},
+    notes:[
+      {id:1, type:'accept', point:'kup', date:'2026-10-26', author:'Сергей Петров', text:'Пришло 3 коробки вместо 5. Водитель уехал, акт не подписан.', solved:false},
+      {id:2, type:'remark', point:'len', date:'2026-10-27', author:'Анна Смирнова', text:'Перегорела лампа над стойкой выдачи, вечером темно.', solved:false},
+      {id:3, type:'short',  point:'nev', date:'2026-10-23', author:'Дмитрий Козлов', text:'В кассе не хватает 1 000 ₽ по итогам смены.', solved:true, result:'Штраф 1 000 ₽ учтён в выплате'},
+      {id:4, type:'accept', point:'nev', date:'2026-10-21', author:'Ольга Иванова', text:'Поставка приехала в 20:40, после закрытия. Принимала до 21:30.', solved:true, result:'Доплата 500 ₽ учтена в выплате'},
+      {id:5, type:'remark', point:'kup', date:'2026-10-18', author:'Мария Кузнецова', text:'В субботу очередь до двери, не хватает второго окна выдачи.', solved:false},
+      {id:6, type:'short',  point:'len', date:'2026-10-12', author:'Игорь Волков', text:'Не найден заказ 48213-07 при инвентаризации.', solved:true, result:'Заказ нашёлся на складе Невского'},
+    ],
+    nid:7,
+    sheet:null,
+  };
+}
+function seedStatus(ds, emp){
+  if (ds > TODAY) return 'plan';
+  if (ds < PAY_WEEK) return 'paid';
+  if (ds < CUR_WEEK) return 'confirmed';
+  if (ds === '2026-10-26') return 'confirmed';
+  if (ds === '2026-10-27') return emp===ME ? 'review' : 'confirmed';
+  return 'review';
+}
+
+/* ===== Утилиты ===== */
+const MG = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const MN = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const MS = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+const WS = ['вс','пн','вт','ср','чт','пт','сб'];
+const WF = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+function P(s){const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);}
+function I(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function add(s,n){const d=P(s);d.setDate(d.getDate()+n);return I(d);}
+function monday(s){const d=P(s);return add(s,-((d.getDay()+6)%7));}
+function dm(s){const d=P(s);return d.getDate()+' '+MG[d.getMonth()];}
+function dshort(s){const d=P(s);return d.getDate()+' '+MS[d.getMonth()];}
+function wd(s){return WS[P(s).getDay()];}
+function wdFull(s){return WF[P(s).getDay()];}
+function cap(t){return t.charAt(0).toUpperCase()+t.slice(1);}
+function range(start){const end=add(start,6);const a=P(start),b=P(end);
+  return a.getMonth()===b.getMonth() ? a.getDate()+'–'+b.getDate()+' '+MG[b.getMonth()] : dshort(start)+' – '+dshort(end);}
+function rub(n){const s=Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,' ');return (n<0?'−':'')+s+' ₽';}
+function pl(n,f){const a=n%10,b=n%100;return f[(a===1&&b!==11)?0:(a>=2&&a<=4&&(b<12||b>14))?1:2];}
+function esc(t){return String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+const emp = id => STAFF.find(s=>s.id===id);
+const pt = id => POINTS.find(p=>p.id===id);
+function shortName(id){const n=emp(id).name.split(' ');return n[0]+' '+n[1][0]+'.';}
+function initials(id){const n=emp(id).name.split(' ');return n[0][0]+n[1][0];}
+function ava(id,sm){return `<div class="ava${sm?' sm':''}" style="background:${emp(id).color}">${initials(id)}</div>`;}
+function amount(s){return s.type==='vacation'?0:s.type==='hours'?s.hours*HOUR_RATE:RATE;}
+function sumShifts(arr){return arr.reduce((a,s)=>a+amount(s),0);}
+function typeLabel(s){return s.type==='vacation'?'Отпуск':s.type==='hours'?s.hours+' '+pl(s.hours,['час','часа','часов']):'Полный день';}
+const ST = {review:'На проверке', confirmed:'Подтверждена', paid:'Оплачена', plan:'По графику', vacation:'Отпуск'};
+function pill(st,txt){return `<span class="pill ${st}">${txt||ST[st]}</span>`;}
+
+const ICON = {
+  cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M8 13.5h.01M12 13.5h.01M16 13.5h.01M8 17h.01M12 17h.01"/></svg>',
+  wallet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7.5V6.5A2 2 0 0 1 7 4.5h10.5V7.5"/><rect x="3" y="7.5" width="18" height="12.5" rx="3"/><path d="M21 11.5h-4a2 2 0 0 0 0 4h4"/></svg>',
+  pay:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/><path d="M6 10v4M18 10v4"/></svg>',
+  store:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 10.5v9h15v-9"/><path d="M3 5h18l-1.3 5.5H4.3z"/><path d="M10 19.5V15h4v4.5"/></svg>',
+  grid:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9h18M3 14.5h18M9 4v16"/></svg>',
+  note:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="4.5" width="15" height="16" rx="2.5"/><path d="M9 3h6v3H9zM8.5 11h7M8.5 15h4.5"/></svg>',
+  bot:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.3a8 8 0 1 1 15-4.2z"/><path d="M9 11.5h.01M12.5 11.5h.01M16 11.5h.01"/></svg>',
+  left:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  right:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
+  chev:'<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
+  check:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  plane:'<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.7 4.3c.4-.2.8.2.7.6l-2.9 14c-.1.5-.7.7-1.1.4l-4.4-3.3-2.2 2.1c-.3.3-.7.1-.7-.3l.2-3.4 7.6-6.9c.2-.2-.1-.4-.3-.3l-9.4 5.9-4-1.3c-.5-.2-.5-.9 0-1.1z"/></svg>',
+};
+
+let state = buildState();
+// раскрыть сотрудников с неподтверждёнными сменами
+payoutData().rows.forEach(r=>{ if (r.pend.length) state.expanded.add(r.id); });
+
+/* ===== Расчёты ===== */
+function myShift(date){return state.shifts.find(s=>s.emp===ME && s.date===date);}
+function payoutData(){
+  const end = add(PAY_WEEK,6);
+  const rows = STAFF.map(s=>{
+    const sh = state.shifts.filter(x=>x.emp===s.id && x.date>=PAY_WEEK && x.date<=end && x.type!=='vacation').sort((a,b)=>a.date<b.date?-1:1);
+    const conf = sh.filter(x=>x.status==='confirmed'||x.status==='paid');
+    const pend = sh.filter(x=>x.status==='review');
+    const adj = state.adjustments.filter(a=>a.emp===s.id && a.week===PAY_WEEK);
+    const debts = state.debts.filter(d=>d.emp===s.id && d.added);
+    const total = sumShifts(conf) + adj.reduce((a,x)=>a+x.amount,0) + debts.reduce((a,x)=>a+x.amount,0);
+    return {id:s.id, sh, conf, pend, adj, debts, total, pendSum:sumShifts(pend)};
+  }).filter(r=>r.sh.length||r.adj.length||r.debts.length);
+  const total = rows.reduce((a,r)=>a+r.total,0);
+  const pend = rows.flatMap(r=>r.pend);
+  const byPoint = POINTS.map(p=>({p, sum:sumShifts(rows.flatMap(r=>r.conf).filter(s=>s.point===p.id)), n:rows.flatMap(r=>r.conf).filter(s=>s.point===p.id).length}));
+  const adjSum = rows.reduce((a,r)=>a+r.adj.reduce((b,x)=>b+x.amount,0),0);
+  const debtSum = rows.reduce((a,r)=>a+r.debts.reduce((b,x)=>b+x.amount,0),0);
+  return {rows,total,pend,pendSum:sumShifts(pend),byPoint,adjSum,debtSum};
+}
+function myMoney(){
+  const wEnd = add(CUR_WEEK,6);
+  const week = state.shifts.filter(s=>s.emp===ME && s.date>=CUR_WEEK && s.date<=wEnd && s.date<=TODAY && s.type!=='vacation' && s.status!=='plan');
+  const pEnd = add(PAY_WEEK,6);
+  const last = state.shifts.filter(s=>s.emp===ME && s.date>=PAY_WEEK && s.date<=pEnd && s.type!=='vacation');
+  const lastConf = last.filter(s=>s.status==='confirmed');
+  const debts = state.debts.filter(d=>d.emp===ME && !d.paid);
+  const debtAdded = debts.filter(d=>d.added);
+  const toPay = state.payoutDone ? 0 : sumShifts(lastConf) + debtAdded.reduce((a,d)=>a+d.amount,0);
+  // история выплат: оплаченные смены по неделям + отмеченные выплаты
+  const weeks = {};
+  const paidWeeks = state.payouts.filter(p=>p.emp===ME).map(p=>p.week);
+  state.shifts.filter(s=>s.emp===ME && s.status==='paid' && s.type!=='vacation' && !s.unpaid && !paidWeeks.includes(monday(s.date))).forEach(s=>{
+    const w = monday(s.date); (weeks[w] = weeks[w] || {week:w, amount:0, n:0}); weeks[w].amount += amount(s); weeks[w].n++;
+  });
+  let hist = Object.values(weeks).map(w=>({date:add(w.week,10), week:w.week, amount:w.amount, n:w.n,
+    note: state.shifts.some(s=>s.emp===ME && s.unpaid && monday(s.date)===w.week && !state.debts.find(d=>d.shiftId===s.id&&d.paid)) ? '1 смена не вошла в выплату' : ''}));
+  hist.sort((a,b)=>a.date<b.date?1:-1);
+  return {week, weekSum:sumShifts(week), weekPend:week.filter(s=>s.status==='review').length, last, lastConf, toPay, debts, debtAdded, hist};
+}
+
+/* ===== Отрисовка ===== */
+const TABS = {
+  emp:[{id:'shifts',label:'Смены',icon:'cal'},{id:'money',label:'Деньги',icon:'wallet'}],
+  owner:[{id:'payout',label:'Выплата',icon:'pay'},{id:'today',label:'Сегодня',icon:'store'},{id:'sched',label:'График',icon:'grid'},{id:'notes',label:'Пометки',icon:'note'},{id:'bot',label:'Бот',icon:'bot'}],
+};
+function render(){
+  document.getElementById('seg').classList.toggle('owner', state.role==='owner');
+  document.getElementById('seg-emp').classList.toggle('on', state.role==='emp');
+  document.getElementById('seg-owner').classList.toggle('on', state.role==='owner');
+  const scr = {shifts:scrShifts, money:scrMoney, payout:scrPayout, today:scrToday, sched:scrSched, notes:scrNotes, bot:scrBot}[state.tab];
+  document.getElementById('main').innerHTML = scr();
+  const pd = payoutData();
+  const badges = {payout: state.payoutDone?0:pd.pend.length, today: todayData().filter(x=>!x.list.length).length, notes: state.notes.filter(n=>!n.solved).length};
+  document.getElementById('tabs').innerHTML = TABS[state.role].map(t=>`
+    <button class="tab${state.tab===t.id?' on':''}" data-a="tab" data-v="${t.id}">
+      ${ICON[t.icon]}<span>${t.label}</span>${badges[t.id]?`<i class="badge">${badges[t.id]}</i>`:''}
+    </button>`).join('');
+}
+
+/* --- Сотрудник: Мои смены --- */
+function scrShifts(){
+  const [y,m] = state.calMonth.split('-').map(Number);
+  const first = `${y}-${String(m).padStart(2,'0')}-01`;
+  const start = monday(first);
+  const lastDay = new Date(y,m,0).getDate();
+  const endIso = `${y}-${String(m).padStart(2,'0')}-${lastDay}`;
+  const end = add(monday(endIso),6);
+  let cells = '';
+  for (let d=start; d<=end; d=add(d,1)){
+    const out = P(d).getMonth()!==m-1;
+    const s = myShift(d);
+    let cls = 'day', lb = '';
+    if (out) cls += ' out';
+    if (d===TODAY) cls += ' today';
+    if (s){
+      cls += ' ' + (s.type==='vacation' ? 'vacation' : s.unpaid && s.status!=='paid' ? 'unpaid' : s.status);
+      lb = s.type==='vacation' ? 'отпуск' : s.type==='hours' ? s.hours+' ч' : pt(s.point).short;
+    }
+    cells += `<button class="${cls}" data-a="day" data-v="${d}"><span class="n num">${P(d).getDate()}</span><span class="lb">${lb}</span></button>`;
+  }
+  const monthShifts = state.shifts.filter(s=>s.emp===ME && s.date.startsWith(state.calMonth) && s.type!=='vacation' && s.status!=='plan');
+  const recent = state.shifts.filter(s=>s.emp===ME && s.date<=TODAY && s.status!=='plan').sort((a,b)=>a.date<b.date?1:-1).slice(0,5);
+  const prev = state.calMonth > '2026-09', next = state.calMonth < '2026-11';
+  return `
+  <div class="who">${ava(ME)}<div><b>${emp(ME).name}</b><span>Сотрудник · ${rub(RATE)} за смену</span></div></div>
+  <div class="screen-head"><h1>Мои смены</h1><p>Нажмите на день, чтобы отметить смену</p></div>
+  <div class="card">
+    <div class="cal-head">
+      <button class="icon-btn" data-a="month" data-v="-1" ${prev?'':'disabled style="opacity:.3"'} aria-label="Предыдущий месяц">${ICON.left}</button>
+      <b>${MN[m-1]} ${y}</b>
+      <button class="icon-btn" data-a="month" data-v="1" ${next?'':'disabled style="opacity:.3"'} aria-label="Следующий месяц">${ICON.right}</button>
+    </div>
+    <div class="cal-wd"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div>
+    <div class="cal-grid">${cells}</div>
+  </div>
+  <div class="legend">${pill('review')}${pill('confirmed')}${pill('paid')}${pill('vacation')}${pill('plan')}</div>
+  <div class="card big-row">
+    <div><div class="hint" style="padding:0">${MN[m-1]}: отмечено</div><b style="font-size:20px">${monthShifts.length} ${pl(monthShifts.length,['смена','смены','смен'])}</b></div>
+    <b class="num" style="font-size:20px">${rub(sumShifts(monthShifts))}</b>
+  </div>
+  <div class="section-title">Последние отметки</div>
+  <div class="list">${recent.map(s=>`
+    <button class="list-row" data-a="day" data-v="${s.date}">
+      <div class="grow"><div class="t">${dm(s.date)}, ${wd(s.date)}</div><div class="s">${s.type==='vacation'?'Отпуск':pt(s.point).name+' · '+typeLabel(s)}</div></div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+        <span class="r num">${s.type==='vacation'?'—':rub(amount(s))}</span>${s.type==='vacation'?pill('vacation'):pill(s.status)}
+      </div>
+    </button>`).join('')}
+  </div>`;
+}
+
+/* --- Сотрудник: Мои деньги --- */
+function scrMoney(){
+  const mm = myMoney();
+  const debt = mm.debts[0];
+  const debtShift = debt && state.shifts.find(s=>s.id===debt.shiftId);
+  return `
+  <div class="who">${ava(ME)}<div><b>${emp(ME).name}</b><span>Сотрудник · выплата по четвергам</span></div></div>
+  <div class="screen-head"><h1>Мои деньги</h1><p>Неделя пн–вс оплачивается в четверг следующей недели</p></div>
+  <div class="hero">
+    <span class="lbl">За эту неделю · ${range(CUR_WEEK)}</span>
+    <span class="big num">${rub(mm.weekSum)}</span>
+    <span class="sub">${mm.week.length} ${pl(mm.week.length,['смена','смены','смен'])}${mm.weekPend?` · ${mm.weekPend} на проверке`:''} · выплата ${dm(add(CUR_WEEK,10))}</span>
+  </div>
+  <div class="card money-card">
+    <span class="lbl">К выплате в четверг, ${dm(PAY_DATE)}</span>
+    <span class="val num">${rub(mm.toPay)}</span>
+    <span class="sub">${state.payoutDone ? 'Владелец отметил выплату' : `За неделю ${range(PAY_WEEK)} · ${mm.lastConf.length} ${pl(mm.lastConf.length,['смена','смены','смен'])}${mm.debtAdded.length?' + долг '+rub(mm.debtAdded[0].amount):''}`}</span>
+  </div>
+  ${debt ? `
+  <div class="card money-card debt${debt.added?' added':''}">
+    <span class="lbl">Долг с прошлых недель</span>
+    <span class="val num">${rub(debt.amount)}</span>
+    <span class="sub">Смена ${dm(debtShift.date)}, ${pt(debtShift.point).name} не оплачена.<br>${debt.added?'Владелец добавил её к выплате '+dm(PAY_DATE)+'.':'Владелец видит этот долг в выплате.'}</span>
+  </div>` : `
+  <div class="card money-card"><span class="lbl">Долг с прошлых недель</span><span class="val num">${rub(0)}</span><span class="sub">Все прошлые смены оплачены</span></div>`}
+  <div class="section-title">История выплат</div>
+  <div class="list">
+    ${state.payouts.filter(p=>p.emp===ME).map(p=>`
+    <div class="list-row"><div class="grow"><div class="t">${dm(p.date)}</div><div class="s">За ${range(p.week)}${p.debt?' · с долгом':''}</div></div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="r num">${rub(p.amount)}</span>${pill('paid','Выплачено')}</div></div>`).join('')}
+    ${mm.hist.slice(0,5).map(h=>`
+    <div class="list-row"><div class="grow"><div class="t">${dm(h.date)}</div><div class="s">За ${range(h.week)} · ${h.n} ${pl(h.n,['смена','смены','смен'])}${h.note?`<br><span style="color:var(--red-text)">${h.note}</span>`:''}</div></div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="r num">${rub(h.amount)}</span>${pill('paid','Выплачено')}</div></div>`).join('')}
+  </div>
+  <p class="hint">Полный день — ${rub(RATE)}, неполный — ${rub(HOUR_RATE)} в час. Смена попадает в выплату после подтверждения владельцем.</p>`;
+}
+
+/* --- Владелец: Выплата в четверг --- */
+function scrPayout(){
+  const pd = payoutData();
+  const debtsOpen = state.debts.filter(d=>!d.paid);
+  const staffN = pd.rows.length;
+  return `
+  <div class="screen-head"><h1>Выплата в четверг</h1><p>${dm(PAY_DATE)} · за неделю ${range(PAY_WEEK)}</p></div>
+  <div class="hero${state.payoutDone?' done':''}">
+    <span class="lbl">${state.payoutDone?'Выплачено '+dm(PAY_DATE):'Итого к выплате по всем точкам'}</span>
+    <span class="big num" id="total">${rub(pd.total)}</span>
+    <span class="sub">${staffN} ${pl(staffN,['сотрудник','сотрудника','сотрудников'])} · ${POINTS.length} точки${pd.pend.length&&!state.payoutDone?` · ещё ${rub(pd.pendSum)} ждут подтверждения`:''}</span>
+  </div>
+  ${pd.pend.length ? (state.payoutDone ? `
+  <div class="banner"><div class="grow"><b>${pd.pend.length} ${pl(pd.pend.length,['смена не подтверждена','смены не подтверждены','смен не подтверждены'])}</b><span>Они перейдут в следующую выплату</span></div></div>` : `
+  <div class="banner"><div class="grow"><b>Не подтверждено: ${pd.pend.length} ${pl(pd.pend.length,['смена','смены','смен'])}</b><span>Без подтверждения не попадут в выплату</span></div>
+    <button class="btn small yel" data-a="confirmAll">Подтвердить все</button></div>`)
+  : `<div class="banner ok"><div class="grow"><b>Все смены подтверждены</b><span>Сумма готова к выплате</span></div>${ICON.check}</div>`}
+  <div class="section-title">По точкам</div>
+  <div class="list">
+    ${pd.byPoint.map(b=>`<div class="list-row"><div class="grow"><div class="t">${b.p.name}</div><div class="s">${b.n} ${pl(b.n,['смена','смены','смен'])}</div></div><span class="r num">${rub(b.sum)}</span></div>`).join('')}
+    <div class="list-row"><div class="grow"><div class="t">Штрафы и доплаты</div><div class="s">1 штраф, 1 доплата</div></div><span class="r num">${rub(pd.adjSum)}</span></div>
+    ${pd.debtSum?`<div class="list-row"><div class="grow"><div class="t">Долги прошлых недель</div></div><span class="r num">${rub(pd.debtSum)}</span></div>`:''}
+  </div>
+  ${debtsOpen.length && !state.payoutDone ? debtsOpen.map(d=>{const s=state.shifts.find(x=>x.id===d.shiftId);return `
+  <div class="card" style="display:flex;align-items:center;gap:12px;${d.added?'':'background:var(--red-soft)'}">
+    ${ava(d.emp,1)}
+    <div style="flex:1;min-width:0"><b style="display:block;font-size:15px;${d.added?'':'color:var(--red-text)'}">Долг: ${shortName(d.emp)} · ${rub(d.amount)}</b>
+    <span class="hint" style="padding:0">Смена ${dshort(s.date)}, ${pt(s.point).name} не оплачена</span></div>
+    ${d.added?`<button class="btn small ghost" data-a="debt" data-v="${d.id}">Убрать</button>`:`<button class="btn small" data-a="debt" data-v="${d.id}">Добавить</button>`}
+  </div>`;}).join('') : ''}
+  <div class="section-title">Сотрудники</div>
+  <div class="list">
+    ${pd.rows.map(r=>{
+      const open = state.expanded.has(r.id), hasP = r.pend.length>0;
+      return `
+      <button class="list-row emp-row${hasP?' pending':''}${open?' open':''}" data-a="toggleEmp" data-v="${r.id}">
+        ${ava(r.id,1)}
+        <div class="grow"><div class="t">${emp(r.id).name}</div>
+          <div class="s">${r.sh.length} ${pl(r.sh.length,['смена','смены','смен'])}${hasP?` · <span style="color:var(--yel-text);font-weight:600">${r.pend.length} не подтв.</span>`:''}${r.adj.length?' · '+(r.adj[0].amount<0?'штраф':'доплата'):''}${r.debts.length?' · долг':''}</div></div>
+        <span class="r num">${rub(r.total)}</span>${ICON.chev}
+      </button>
+      ${open?`<div class="emp-detail${hasP?' pending':''}">
+        ${r.sh.map(s=> s.status==='review' ? `
+          <div class="line warn"><div class="grow">${wd(s.date)}, ${dshort(s.date)} · ${pt(s.point).short}<br><small>${typeLabel(s)} · на проверке</small></div>
+            <span class="am num">${rub(amount(s))}</span>${state.payoutDone?'':`<button class="ok-btn" data-a="confirm" data-v="${s.id}">Подтвердить</button>`}</div>`
+          : `<div class="line"><div class="grow">${wd(s.date)}, ${dshort(s.date)} · ${pt(s.point).short} <small>${s.type==='hours'?'· '+typeLabel(s):''}</small></div><span class="am num">${rub(amount(s))}</span></div>`).join('')}
+        ${r.adj.map(a=>`<div class="line"><div class="grow"><small>${a.label}</small></div><span class="am num ${a.amount<0?'minus':'plus'}">${a.amount>0?'+':''}${rub(a.amount)}</span></div>`).join('')}
+        ${r.debts.map(d=>`<div class="line"><div class="grow"><small>Долг с прошлых недель</small></div><span class="am num plus">+${rub(d.amount)}</span></div>`).join('')}
+      </div>`:''}`;
+    }).join('')}
+  </div>
+  ${state.payoutDone
+    ? `<div class="banner ok"><div class="grow"><b>Выплата отмечена</b><span>Сотрудники видят статус «Оплачена»</span></div>${ICON.check}</div>`
+    : `<button class="btn" data-a="payAsk">Отметить выплату · ${rub(pd.total)}</button>`}`;
+}
+
+/* --- Владелец: Сегодня --- */
+function todayData(){
+  return POINTS.map(p=>({p, list: state.shifts.filter(s=>s.date===TODAY && s.point===p.id && s.type!=='vacation')}));
+}
+function scrToday(){
+  const td = todayData();
+  const open = td.filter(x=>x.list.some(s=>s.status!=='plan')).length;
+  const people = td.reduce((a,x)=>a+x.list.length,0);
+  return `
+  <div class="screen-head"><h1>Сегодня</h1><p>${cap(wdFull(TODAY))}, ${dm(TODAY)} · точки работают ${HOURS_OPEN}</p></div>
+  <div class="stat-row">
+    <div class="stat"><b class="num">${open} из ${POINTS.length}</b><span>точки открыты</span></div>
+    <div class="stat"><b class="num">${people}</b><span>${pl(people,['человек','человека','человек'])} на сменах</span></div>
+  </div>
+  ${td.map(({p,list})=>{
+    if (!list.length) return `
+    <div class="point alarm">
+      <div class="point-top"><span class="dot"></span><div class="grow"><b>${p.name}</b><span>${p.addr}</span></div>${pill('red','Закрыто')}</div>
+      <div class="alarm-text">Нет сотрудника на смене<small>Точка должна была открыться в 10:00</small></div>
+      <button class="btn" style="background:var(--red)" data-a="assign" data-p="${p.id}" data-d="${TODAY}">Назначить сотрудника</button>
+    </div>`;
+    const waiting = list.every(s=>s.status==='plan');
+    return `
+    <div class="point${waiting?' wait':''}">
+      <div class="point-top"><span class="dot"></span><div class="grow"><b>${p.name}</b><span>${p.addr}</span></div>${waiting?pill('review','Ждём отметку'):pill('confirmed','Открыто')}</div>
+      ${list.map(s=>`<div class="staff-line">${ava(s.emp,1)}<div class="grow"><b>${emp(s.emp).name}</b><span>${s.status==='plan'?'Назначено только что · ждём отметку':'На смене с '+(state.checkins[p.id]||'10:00')+' · '+typeLabel(s).toLowerCase()}</span></div></div>`).join('')}
+    </div>`;
+  }).join('')}
+  <p class="hint">Красная карточка — на точке никого нет. Нажмите «Назначить», чтобы закрыть смену.</p>`;
+}
+
+/* --- Владелец: График --- */
+function scrSched(){
+  const w = state.schedWeek;
+  let rows = '';
+  for (let i=0;i<7;i++){
+    const d = add(w,i);
+    rows += `<div class="d${d===TODAY?' today':''}"><b class="num">${P(d).getDate()}</b><span>${wd(d)}${d===TODAY?' · сег.':''}</span></div>`;
+    POINTS.forEach(p=>{
+      const list = state.shifts.filter(s=>s.date===d && s.point===p.id && s.type!=='vacation');
+      const t = d===TODAY?' today':'';
+      if (!list.length) rows += `<button class="cell empty${t}" data-a="cell" data-p="${p.id}" data-d="${d}">Нет</button>`;
+      else rows += `<button class="cell st-${list[0].status}${t}" data-a="cell" data-p="${p.id}" data-d="${d}"><span class="sd"></span>${list.map(s=>shortName(s.emp)).join('<br>')}</button>`;
+    });
+  }
+  const wEnd = add(w,6);
+  const counts = STAFF.map(s=>({s, n:state.shifts.filter(x=>x.emp===s.id && x.date>=w && x.date<=wEnd && x.type!=='vacation').length}));
+  const vac = STAFF.map(s=>({s, days:state.shifts.filter(x=>x.emp===s.id && x.date>=w && x.date<=wEnd && x.type==='vacation')})).filter(x=>x.days.length);
+  const gaps = rows.split('cell empty').length-1;
+  return `
+  <div class="screen-head"><h1>График</h1><p>Кто где работает на неделе</p></div>
+  <div class="week-nav">
+    <button class="icon-btn" data-a="week" data-v="-7" aria-label="Прошлая неделя">${ICON.left}</button>
+    <div style="text-align:center"><b>${range(w)}</b><div class="hint" style="padding:0">${w===CUR_WEEK?'Эта неделя':w<CUR_WEEK?'Прошедшая неделя':'Следующая неделя'}${gaps?` · <span style="color:var(--red-text)">${gaps} ${pl(gaps,['пустая смена','пустые смены','пустых смен'])}</span>`:''}</div></div>
+    <button class="icon-btn" data-a="week" data-v="7" aria-label="Следующая неделя">${ICON.right}</button>
+  </div>
+  <div class="sched">
+    <div></div>${POINTS.map(p=>`<div class="h">${p.name}</div>`).join('')}
+    ${rows}
+  </div>
+  <div class="legend">${pill('review')}${pill('confirmed')}${pill('paid')}${pill('plan')}${pill('red','Нет сотрудника')}</div>
+  ${vac.length?`<div class="card" style="font-size:15px"><b>В отпуске:</b> ${vac.map(v=>`${shortName(v.s.id)} (${v.days.map(d=>P(d.date).getDate()).join(', ')} ${MS[P(v.days[0].date).getMonth()]})`).join(', ')}</div>`:''}
+  <div class="section-title">Смен за неделю</div>
+  <div class="chips">${counts.map(c=>`<span class="chip">${shortName(c.s.id)} <span class="c num">${c.n}</span></span>`).join('')}</div>
+  <p class="hint">Нажмите на ячейку, чтобы поставить или заменить сотрудника.</p>`;
+}
+
+/* --- Владелец: Пометки --- */
+const NOTE_T = {short:'Недостача', accept:'Проблема с приёмкой', remark:'Замечание'};
+function scrNotes(){
+  const f = state.noteFilter;
+  const list = state.notes.filter(n=>f==='all'||n.type===f).sort((a,b)=>(a.solved-b.solved)||(a.date<b.date?1:-1));
+  const cnt = t => state.notes.filter(n=>t==='all'||n.type===t).length;
+  return `
+  <div class="screen-head"><h1>Пометки ПВЗ</h1><p>Недостачи, приёмка и замечания с точек</p></div>
+  <div class="chips scroll">
+    ${[['all','Все'],['short','Недостача'],['accept','Приёмка'],['remark','Замечание']].map(([k,l])=>`<button class="chip${f===k?' on':''}" data-a="nf" data-v="${k}">${l} <span class="c">${cnt(k)}</span></button>`).join('')}
+  </div>
+  ${list.map(n=>`
+  <button class="note${n.solved?' solved':''}" data-a="note" data-v="${n.id}">
+    <div class="note-top"><span class="tag ${n.type}">${NOTE_T[n.type]}</span><span class="tag pt">${pt(n.point).name}</span><span class="meta">${dshort(n.date)}</span></div>
+    <p>${esc(n.text)}</p>
+    <div class="foot">${esc(n.author)}${n.solved?` · <span class="solved-mark">Решено${n.result?': '+esc(n.result):''}</span>`:'<span class="act">Открыть</span>'}</div>
+  </button>`).join('') || '<p class="hint">Пометок этого типа нет.</p>'}
+  <button class="btn soft" data-a="noteNew">Добавить пометку</button>`;
+}
+
+/* --- Владелец: уведомление от бота --- */
+function scrBot(){
+  const pd = payoutData();
+  return `
+  <div class="screen-head"><h1>Уведомления</h1><p>Так сообщения бота выглядят в Telegram</p></div>
+  <div class="chat">
+    <div class="chat-head">
+      <span class="back">${ICON.left}Чаты</span>
+      <div class="grow"><b>ПВЗ Смены</b><span>бот</span></div>
+      <div class="bot-ava">${ICON.plane}</div>
+    </div>
+    <div class="chat-body">
+      <span class="day-sep">${dm(TODAY)}</span>
+      <div class="msg">
+        <div class="bubble"><div class="from">ПВЗ Смены</div>Купчино: на смене никого нет.<br>Точка должна была открыться в 10:00.<span class="time">10:15</span></div>
+        <div class="kb"><button data-a="go" data-v="today">Открыть «Сегодня»</button></div>
+      </div>
+      <div class="msg">
+        <div class="bubble">Новая пометка, Купчино: проблема с приёмкой.<br>«Пришло 3 коробки вместо 5»<span class="time">12:40</span></div>
+        <div class="kb"><button data-a="go" data-v="notes">Открыть пометки</button></div>
+      </div>
+      <div class="msg">
+        <div class="bubble main">Завтра выплата: итог <b class="num">${rub(pd.total)}</b>, неподтверждённых смен: <b>${pd.pend.length}</b>.<br><span style="color:var(--hint);font-size:14px">Неделя ${range(PAY_WEEK)} · ${POINTS.length} точки</span><span class="time">18:00</span></div>
+        <div class="kb two"><button data-a="go" data-v="payout">Открыть выплату</button><button data-a="confirmAllBot" ${pd.pend.length?'':'disabled style="opacity:.5"'}>Подтвердить все</button></div>
+      </div>
+      ${state.payoutDone?`<div class="msg"><div class="bubble">Выплата за ${range(PAY_WEEK)} отмечена: <b class="num">${rub(pd.total)}</b>. Сотрудники получили уведомления.<span class="time">18:05</span></div></div>`:''}
+    </div>
+    <div class="chat-input"><button class="menu-btn" data-a="go" data-v="payout">Открыть</button><div class="field">Сообщение</div></div>
+  </div>`;
+}
+
+/* ===== Шторки ===== */
+function openSheet(s){ state.sheet = s; renderSheet(); requestAnimationFrame(()=>{document.getElementById('sheet').classList.add('open');document.getElementById('shade').classList.add('open');}); }
+function closeSheet(){ state.sheet = null; document.getElementById('sheet').classList.remove('open'); document.getElementById('shade').classList.remove('open'); }
+function renderSheet(){
+  const s = state.sheet; if (!s) return;
+  const el = document.getElementById('sheet');
+  el.innerHTML = '<div class="grab"></div>' + ({day:shDay, assign:shAssign, pay:shPay, note:shNote, noteNew:shNoteNew, menu:shMenu}[s.kind])(s);
+}
+function shDay(s){
+  const sh = myShift(s.date);
+  const head = `<div><h2>${cap(wdFull(s.date))}, ${dm(s.date)}</h2>`;
+  if (sh && !s.edit){
+    if (sh.status==='plan') return head+`<div class="sub">Смена по графику</div></div>
+      <div class="kv"><div><span>Точка</span><b>${pt(sh.point).name}</b></div><div><span>Время</span><b>${HOURS_OPEN}</b></div><div><span>Оплата</span><b class="num">${rub(RATE)}</b></div></div>
+      <p class="hint">Отметить работу можно в день смены.</p>
+      <button class="btn ghost" data-a="vacation">Отметить отпуск</button>`;
+    if (sh.type==='vacation') return head+`<div class="sub">${pill('vacation')}</div></div>
+      <p class="hint">В этот день вы не стоите в графике.</p>
+      <button class="btn danger" data-a="delShift">Убрать отпуск</button>`;
+    return head+`<div class="sub">${sh.unpaid&&sh.status!=='paid'?pill('red','Не оплачена'):pill(sh.status)}</div></div>
+      <div class="kv"><div><span>Точка</span><b>${pt(sh.point).name}</b></div><div><span>Отметка</span><b>${typeLabel(sh)}</b></div><div><span>Сумма</span><b class="num">${rub(amount(sh))}</b></div>
+        <div><span>Выплата</span><b>${dm(add(monday(sh.date),10))}</b></div></div>
+      ${sh.status==='review'
+        ? `<div class="row-btns"><button class="btn ghost" data-a="editShift">Изменить</button><button class="btn danger" data-a="delShift">Удалить</button></div>`
+        : `<p class="hint">${sh.unpaid&&sh.status!=='paid'?'Смена подтверждена, но не вошла в выплату. Она висит долгом у владельца.':sh.status==='paid'?'Смена оплачена.':'Владелец подтвердил смену, она войдёт в выплату.'} Изменить её нельзя.</p><button class="btn ghost" data-a="closeSheet">Закрыть</button>`}`;
+  }
+  if (s.date > TODAY) return head+`<div class="sub">День ещё не наступил</div></div>
+    <p class="hint">Смену можно отметить в день работы или позже. Сейчас можно отметить отпуск.</p>
+    <button class="btn" data-a="vacation">Отметить отпуск</button>`;
+  const pOk = !!s.point;
+  return head+`<div class="sub">${s.edit?'Изменение отметки':'Отметка смены'} · уйдёт владельцу на проверку</div></div>
+    <div class="step${s.err?' err':''}">1. Где работали?</div>
+    <div class="opts">${POINTS.map(p=>`<button class="opt${s.point===p.id?' on':''}${s.err?' shake':''}" data-a="pickPoint" data-v="${p.id}"><span class="radio"></span><div class="grow"><b>${p.name}</b><span>${p.addr}</span></div></button>`).join('')}</div>
+    <div class="step">2. Что отметить?</div>
+    <div class="acts">
+      <button class="act-btn${pOk?'':' off'}" data-a="markFull">Полный день<small class="num">${rub(RATE)}</small></button>
+      <button class="act-btn alt${s.mode==='hours'?' on':''}${pOk?'':' off'}" data-a="markHours">Часы<small>${rub(HOUR_RATE)}/час</small></button>
+      <button class="act-btn vac" data-a="vacation">Отпуск<small>без оплаты</small></button>
+    </div>
+    ${s.mode==='hours'&&pOk?`
+    <div class="stepper"><button data-a="hrs" data-v="-1" aria-label="Меньше">−</button><div class="v"><b class="num">${s.hours} ${pl(s.hours,['час','часа','часов'])}</b><span class="num">${rub(s.hours*HOUR_RATE)}</span></div><button data-a="hrs" data-v="1" aria-label="Больше">+</button></div>
+    <button class="btn" data-a="saveHours">Сохранить · ${rub(s.hours*HOUR_RATE)}</button>`:''}
+    ${pOk?'':'<p class="hint">Сначала выберите точку, потом тип отметки.</p>'}`;
+}
+function shAssign(s){
+  const p = pt(s.p);
+  const cur = state.shifts.filter(x=>x.date===s.d && x.point===s.p && x.type!=='vacation');
+  const past = s.d < TODAY;
+  if (past) return `<div><h2>${p.name}</h2><div class="sub">${cap(wdFull(s.d))}, ${dm(s.d)}</div></div>
+    ${cur.length?cur.map(x=>`<div class="staff-line" style="background:var(--bg2)">${ava(x.emp,1)}<div class="grow"><b>${emp(x.emp).name}</b><span>${typeLabel(x)} · ${rub(amount(x))}</span></div>${pill(x.status)}</div>`).join(''):'<p class="hint">В этот день смены не было.</p>'}
+    <p class="hint">Прошедшие смены меняются только через подтверждение в выплате.</p>
+    <button class="btn ghost" data-a="closeSheet">Закрыть</button>`;
+  return `<div><h2>${p.name}</h2><div class="sub">${cap(wdFull(s.d))}, ${dm(s.d)} · ${HOURS_OPEN}</div></div>
+    <div class="step">Кто работает?</div>
+    <div class="opts">${STAFF.map(st=>{
+      const other = state.shifts.find(x=>x.date===s.d && x.emp===st.id && x.point!==s.p);
+      const here = cur.find(x=>x.emp===st.id);
+      const fem = /[аия]$/.test(st.name.split(' ')[0]);
+      const why = other ? (other.type==='vacation'?'в отпуске':'уже на '+pt(other.point).name) : here ? 'стоит на этой смене' : (fem?'свободна':'свободен')+' в этот день';
+      return `<button class="opt${here?' on':''}" data-a="setEmp" data-v="${st.id}" ${other?'disabled':''}>${ava(st.id,1)}<div class="grow"><b>${st.name}</b><span>${why}</span></div><span class="radio"></span></button>`;
+    }).join('')}</div>
+    ${cur.length?`<button class="btn danger" data-a="clearCell">Убрать с этой смены</button>`:''}`;
+}
+function shPay(){
+  const pd = payoutData();
+  return `<div><h2>Отметить выплату?</h2><div class="sub">${dm(PAY_DATE)} · за ${range(PAY_WEEK)}</div></div>
+    <div class="kv"><div><span>Сумма</span><b class="num">${rub(pd.total)}</b></div><div><span>Сотрудников</span><b>${pd.rows.filter(r=>r.total>0).length}</b></div>
+    ${pd.pend.length?`<div><span>Не подтверждено</span><b style="color:var(--yel-text)">${pd.pend.length} ${pl(pd.pend.length,['смена','смены','смен'])} · ${rub(pd.pendSum)}</b></div>`:''}</div>
+    ${pd.pend.length?'<p class="hint">Неподтверждённые смены не войдут в эту выплату и останутся на следующую неделю.</p>':''}
+    <button class="btn" data-a="payDo">Выплатить ${rub(pd.total)}</button>
+    <button class="btn ghost" data-a="closeSheet">Отмена</button>`;
+}
+function shNote(s){
+  const n = state.notes.find(x=>x.id===s.id);
+  return `<div><h2>${NOTE_T[n.type]}</h2><div class="sub">${pt(n.point).name} · ${dm(n.date)} · ${esc(n.author)}</div></div>
+    <div class="card" style="font-size:16px">${esc(n.text)}</div>
+    ${n.solved?`<p class="hint" style="color:var(--grn-text)">Решено${n.result?': '+esc(n.result):''}</p><button class="btn ghost" data-a="noteToggle">Вернуть в работу</button>`
+      :`<button class="btn" data-a="noteToggle">Отметить решённой</button>`}
+    <button class="btn ghost" data-a="closeSheet">Закрыть</button>`;
+}
+function shNoteNew(s){
+  return `<div><h2>Новая пометка</h2><div class="sub">${dm(TODAY)}</div></div>
+    <div class="step">Тип</div>
+    <div class="chips">${Object.entries(NOTE_T).map(([k,l])=>`<button class="chip${s.type===k?' on':''}" data-a="nnType" data-v="${k}">${l}</button>`).join('')}</div>
+    <div class="step">Точка</div>
+    <div class="chips">${POINTS.map(p=>`<button class="chip${s.point===p.id?' on':''}" data-a="nnPoint" data-v="${p.id}">${p.name}</button>`).join('')}</div>
+    <div class="step">Что случилось</div>
+    <textarea id="nn-text" placeholder="Например: не хватает 500 ₽ в кассе">${esc(s.text||'')}</textarea>
+    <button class="btn" data-a="nnSave">Сохранить</button>`;
+}
+function shMenu(){
+  return `<div><h2>Прототип</h2><div class="sub">Данные выдуманы и не сохраняются</div></div>
+    <p style="font-size:15px">Это демонстрация интерфейса. Нажатия работают, но после перезагрузки страницы всё возвращается к исходным данным.</p>
+    <button class="btn soft" data-a="reset">Сбросить демо-данные</button>
+    <button class="btn ghost" data-a="closeSheet">Закрыть</button>`;
+}
+
+/* ===== Действия ===== */
+let toastT;
+function toast(t){const el=document.getElementById('toast');el.innerHTML=ICON.check+'<span>'+t+'</span>';el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2200);}
+function bumpTotal(){const el=document.getElementById('total');if(el){el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump');}}
+function upsertMy(date, data){
+  state.shifts = state.shifts.filter(s=>!(s.emp===ME && s.date===date));
+  state.shifts.push(Object.assign({id:state.sid++, emp:ME, date, status:'review', hours:SHIFT_HOURS}, data));
+}
+const A = {
+  close(){ toast('В прототипе окно не закрывается'); },
+  menu(){ openSheet({kind:'menu'}); },
+  reset(){ state = buildState(); payoutData().rows.forEach(r=>{ if (r.pend.length) state.expanded.add(r.id); }); closeSheet(); render(); toast('Демо-данные сброшены'); },
+  role(d){ if (state.role===d.v) return; state.role=d.v; state.tab=TABS[d.v][0].id; render(); scrollTo(0,0); },
+  tab(d){ state.tab=d.v; render(); scrollTo(0,0); },
+  go(d){ state.role='owner'; state.tab=d.v; render(); scrollTo(0,0); },
+  month(d){ const [y,m]=state.calMonth.split('-').map(Number); const dt=new Date(y,m-1+Number(d.v),1); state.calMonth=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'); render(); },
+  day(d){ openSheet({kind:'day', date:d.v, point:null, mode:null, hours:6}); },
+  pickPoint(d){ state.sheet.point=d.v; state.sheet.err=false; renderSheet(); },
+  markFull(){ const s=state.sheet; upsertMy(s.date,{point:s.point,type:'full',hours:SHIFT_HOURS}); closeSheet(); render(); toast('Смена отправлена на проверку'); },
+  markHours(){ state.sheet.mode='hours'; renderSheet(); },
+  hrs(d){ const s=state.sheet; s.hours=Math.min(SHIFT_HOURS-1,Math.max(1,s.hours+Number(d.v))); renderSheet(); },
+  saveHours(){ const s=state.sheet; upsertMy(s.date,{point:s.point,type:'hours',hours:s.hours}); closeSheet(); render(); toast(`${s.hours} ${pl(s.hours,['час','часа','часов'])} отправлены на проверку`); },
+  vacation(){ const s=state.sheet; upsertMy(s.date,{point:null,type:'vacation',hours:0}); closeSheet(); render(); toast('Отпуск отмечен'); },
+  editShift(){ const s=state.sheet, sh=myShift(s.date); s.edit=true; s.point=sh.point; s.mode=sh.type==='hours'?'hours':null; s.hours=sh.type==='hours'?sh.hours:6; renderSheet(); },
+  delShift(){ const s=state.sheet; state.shifts=state.shifts.filter(x=>!(x.emp===ME&&x.date===s.date)); closeSheet(); render(); toast('Отметка удалена'); },
+  toggleEmp(d){ state.expanded.has(d.v)?state.expanded.delete(d.v):state.expanded.add(d.v); render(); },
+  confirm(d){ const s=state.shifts.find(x=>x.id===Number(d.v)); s.status='confirmed'; render(); bumpTotal(); toast(`Подтверждено · +${rub(amount(s))} к выплате`); },
+  confirmAll(){ const pd=payoutData(); pd.pend.forEach(s=>s.status='confirmed'); render(); bumpTotal(); toast(`Подтверждено ${pd.pend.length} ${pl(pd.pend.length,['смена','смены','смен'])} · +${rub(pd.pendSum)}`); },
+  confirmAllBot(){ const pd=payoutData(); if(!pd.pend.length) return; pd.pend.forEach(s=>s.status='confirmed'); render(); toast(`Подтверждено · итог ${rub(payoutData().total)}`); },
+  debt(d){ const x=state.debts.find(y=>y.id===d.v); x.added=!x.added; render(); bumpTotal(); toast(x.added?`Долг ${rub(x.amount)} добавлен к выплате`:'Долг убран из выплаты'); },
+  payAsk(){ openSheet({kind:'pay'}); },
+  payDo(){
+    const pd = payoutData();
+    pd.rows.forEach(r=>{
+      r.conf.forEach(s=>s.status='paid');
+      r.debts.forEach(dd=>{ dd.paid=true; const s=state.shifts.find(x=>x.id===dd.shiftId); s.status='paid'; });
+      if (r.total>0) state.payouts.push({emp:r.id, date:PAY_DATE, week:PAY_WEEK, amount:r.total, debt:r.debts.length>0});
+    });
+    state.payoutDone = true; closeSheet(); render(); scrollTo(0,0); toast(`Выплата ${rub(pd.total)} отмечена`);
+  },
+  assign(d){ openSheet({kind:'assign', p:d.p, d:d.d}); },
+  cell(d){ openSheet({kind:'assign', p:d.p, d:d.d}); },
+  setEmp(d){
+    const s=state.sheet;
+    state.shifts = state.shifts.filter(x=>!(x.date===s.d && x.point===s.p && x.type!=='vacation'));
+    state.shifts.push({id:state.sid++, emp:d.v, point:s.p, date:s.d, type:'full', hours:SHIFT_HOURS, status:'plan'});
+    closeSheet(); render(); toast(`${shortName(d.v)} → ${pt(s.p).name}, ${dshort(s.d)}`);
+  },
+  clearCell(){ const s=state.sheet; state.shifts=state.shifts.filter(x=>!(x.date===s.d && x.point===s.p && x.type!=='vacation')); closeSheet(); render(); toast('Смена освобождена'); },
+  week(d){ const n=add(state.schedWeek,Number(d.v)); if (n<'2026-10-05'||n>'2026-11-02') return; state.schedWeek=n; render(); },
+  nf(d){ state.noteFilter=d.v; render(); },
+  note(d){ openSheet({kind:'note', id:Number(d.v)}); },
+  noteToggle(){ const n=state.notes.find(x=>x.id===state.sheet.id); n.solved=!n.solved; if(n.solved && !n.result) n.result=''; closeSheet(); render(); toast(n.solved?'Пометка закрыта':'Пометка снова в работе'); },
+  noteNew(){ openSheet({kind:'noteNew', type:'remark', point:'len', text:''}); },
+  nnType(d){ state.sheet.text=document.getElementById('nn-text').value; state.sheet.type=d.v; renderSheet(); },
+  nnPoint(d){ state.sheet.text=document.getElementById('nn-text').value; state.sheet.point=d.v; renderSheet(); },
+  nnSave(){
+    const s=state.sheet, t=document.getElementById('nn-text').value.trim();
+    if (!t){ document.getElementById('nn-text').focus(); return; }
+    state.notes.unshift({id:state.nid++, type:s.type, point:s.point, date:TODAY, author:'Владелец', text:t, solved:false});
+    state.noteFilter='all'; closeSheet(); render(); toast('Пометка добавлена');
+  },
+  closeSheet(){ closeSheet(); },
+};
+document.addEventListener('click', e=>{
+  const el = e.target.closest('[data-a]'); if (!el) return;
+  const fn = A[el.dataset.a]; if (!fn) return;
+  if (el.dataset.a==='markFull' || el.dataset.a==='markHours'){ if(!state.sheet.point){ state.sheet.err=true; renderSheet(); return; } }
+  fn(el.dataset, el, e);
+});
+addEventListener('scroll', ()=>document.getElementById('top').classList.toggle('scrolled', scrollY>4), {passive:true});
+render();
+</script>
+</body>
+</html>
